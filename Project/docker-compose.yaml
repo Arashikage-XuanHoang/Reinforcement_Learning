@@ -1,0 +1,50 @@
+services:
+  kafka1:
+    image: confluentinc/cp-kafka:7.7.7
+    container_name: kafka1
+    ports:
+      - "9092:9092"
+    environment:
+      # Không tự động tạo topic 
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+
+      CLUSTER_ID: exbDrwnPTlqim7-51SwxYw
+      KAFKA_NODE_ID: 1
+
+      # Vai trò của kafka, vì kafka chạy kraft - nó đóng vai trò là cả broker & controller 
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      # Danh sách control node "node_id@host:port - node_id: 1; @host: kafka1; port: 9093"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka1:9093
+
+      # Kafka quảng cáo địa chỉ 
+      # PLAINEXT: client connect 
+      # CONTROLLER: internal
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+
+      # Kafka quảng cáo địa chỉ cho client 
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+
+      # Chỉ định listener nào dùng cho controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+
+      # Tự đống xóa log của kafka sau 24h
+      KAFKA_LOG_RETENTION_HOURS: 24
+
+    volumes:
+      - kafka1:/var/lib/kafka/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list > /dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+volumes:
+  kafka1:
